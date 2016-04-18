@@ -1,0 +1,11 @@
+@main("ACM web tools") {
+
+	@helper.form(action = routes.FileController.upload, 'enctype -> "multipart/form-data") {
+	   
+	    <label class="control-label">Upload a DROID CSV File</label>
+	    <input name="file" type="file" class="file">
+	    <input type="submit" value="Upload" class="btn btn-primary">
+
+	}
+
+}
