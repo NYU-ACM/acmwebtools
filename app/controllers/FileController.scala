@@ -13,19 +13,21 @@ import org.apache.pdfbox.pdmodel.graphics.xobject.{ PDXObjectImage, PDJpeg }
 
 @Singleton
 class FileController extends Controller {
+  
   def droid = Action {
     Ok(views.html.droid())
   }
 
   def upload = Action(parse.multipartFormData) { request =>
     request.body.file("file").map { file =>
-
+      val tmpDir = new File(Play.current.configuration.getString("fs.location").getOrElse("/tmp")) 
       val filename = file.filename
       val contentType = file.contentType
-      val tmp = new File(s"/tmp/$filename")
-      file.ref.moveTo(tmp)
-      val map = populateMap(tmp)
+      val tmpFile = new File(tmpDir, filename)
+      file.ref.moveTo(tmpFile)
+      val map = populateMap(tmpFile)
       val output = generatePDF(map)
+      tmpFile.delete
 
       Ok.sendFile(
         content = output,
@@ -65,7 +67,7 @@ class FileController extends Controller {
 
   def generatePDF(map: Map[String, Entry]): File = {
     val document = new PDDocument
-
+    val tmpDir = new File(Play.current.configuration.getString("fs.location").getOrElse("/tmp")) 
     val sizeData = new DefaultPieDataset
     val countData = new DefaultPieDataset
 
@@ -75,18 +77,20 @@ class FileController extends Controller {
     }
 
     val sizeChart = ChartFactory.createPieChart("Files By Size", sizeData, false, true, false)
-    val countChart = ChartFactory.createPieChart("Files By Size", sizeData, false, true, false)
-    val sizeFile = new File("/tmp/size.jpg")
-    val countFile = new File("/tmp/count.jpg")
+    val countChart = ChartFactory.createPieChart("Files By Count", countData, false, true, false)
+    val sizeFile = new File(tmpDir, "size.jpg")
+    val countFile = new File(tmpDir, "count.jpg")
 
     ChartUtilities.saveChartAsJPEG(sizeFile, sizeChart, 800, 450)
     ChartUtilities.saveChartAsJPEG(countFile, countChart, 800, 450)
 
     addImageToDocument(document, sizeFile)
     addImageToDocument(document, countFile)
-    val output = new File("/tmp/report.pdf")
+    val output = new File(tmpDir, "report.pdf")
     document.save(output)
     document.close
+    sizeFile.delete
+    countFile.delete
     output 
   }
 

@@ -1,10 +1,10 @@
-name := """ACM_WEBTOOLS"""
+name := """ACM-WEBTOOLS"""
 
-version := "0.1-SNAPSHOT"
+version := "0.1"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+lazy val root = (project in file(".")).enablePlugins(PlayScala, RpmPlugin)
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
 libraryDependencies ++= Seq(
   jdbc,
@@ -16,3 +16,19 @@ libraryDependencies ++= Seq(
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
+
+maintainer in Linux := "Donald Mennerich <don.mennerich@nyu.edu>"
+
+packageSummary in Linux := "acm-webtools"
+
+packageDescription := "Tools for born digital processing"
+
+rpmRelease := "1"
+
+rpmVendor := "dlts.nyu.edu"
+
+rpmUrl := Some("Don:archives#179@http://nexus-dev.dlts.org/acm-webtools-development/")
+
+rpmLicense := Some("Apache v2")
+
+defaultLinuxInstallLocation := "/opt"
