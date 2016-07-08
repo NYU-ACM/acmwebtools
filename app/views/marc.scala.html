@@ -1,0 +1,29 @@
+@(files: Array[java.io.File])
+
+@main("ACM web tools") {
+	<h2> Request MARC XML </h2>
+
+	@helper.form(action = routes.MarcController.generate, 'enctype -> "multipart/form-data") {
+	   
+	    <label class="control-label">Request Marc XML for Resource</label>
+	    <table>
+		  <tr>
+	        <td><label class="control-label">Repository</label></td>
+	    	<td><input name="repositoryid" type="text"></td>
+	      </tr>
+	      <tr>
+	    	<td><label class="control-label">Resource ID</label></td>
+	    	<td><input name="resourceid" type="text"></td>
+	      </tr>
+	    </table>
+	    <input type="submit" value="Submit" class="btn btn-primary">
+
+	}
+
+	<h2>Available Files</h2>
+
+	@for(file <- files) { 
+	  <a href='@routes.MarcController.download(file.getName)'/>@file.getName</a><br>
+    }
+
+}

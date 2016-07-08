@@ -1,0 +1,7 @@
+@(files: Array[java.io.File])
+
+@main("ACM web tools") {
+ @for(file <- files) { 
+	<a href='@routes.MarcController.download(file.getName)'/>@file.getName</a><br>
+ }
+}

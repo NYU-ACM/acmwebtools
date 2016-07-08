@@ -3,6 +3,7 @@ package controllers
 import javax.inject._
 import play.api._
 import play.api.mvc._
+import play.api.mvc.Flash
 import java.io.{ FileInputStream, File }
 import scala.io.Source
 import org.jfree.chart.{ ChartFactory, ChartUtilities, JFreeChart }
@@ -14,11 +15,11 @@ import org.apache.pdfbox.pdmodel.graphics.xobject.{ PDXObjectImage, PDJpeg }
 @Singleton
 class FileController extends Controller {
   
-  def droid = Action {
+  def droid = Action { implicit request => 
     Ok(views.html.droid())
   }
 
-  def upload = Action(parse.multipartFormData) { request =>
+  def upload = Action(parse.multipartFormData) { implicit request =>
     request.body.file("file").map { file =>
       val tmpDir = new File(Play.current.configuration.getString("fs.location").getOrElse("/tmp")) 
       val filename = file.filename
