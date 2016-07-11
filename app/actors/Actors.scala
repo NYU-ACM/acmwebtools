@@ -1,6 +1,7 @@
 package actors
 
 import akka.actor.{ Props, Actor, ActorRef }
+import play.api._
 import protocol.Protocol._
 import scala.sys.process._
 
@@ -28,7 +29,7 @@ class MarcActor extends Actor {
       val repo = mr.repositoryId.toString	
       val resource = mr.resourceId.toString
 
-      Seq("ruby", "/vagrant/aspace-marc-cli/download_resource.rb", repo, resource) ! processLogger
+      Seq("ruby", Play.current.configuration.getString("marc.location").get, repo, resource) ! processLogger
 
     } catch {
       case e: Exception => println(e)

@@ -1,6 +1,6 @@
 name := """ACM-WEBTOOLS"""
 
-version := "0.1"
+version := "0.3"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala, RpmPlugin)
 
