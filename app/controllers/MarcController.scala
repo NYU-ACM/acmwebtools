@@ -17,7 +17,7 @@ import scala.concurrent._
 
 
 @Singleton
-class MarcController @Inject() (system: ActorSystem) extends Controller {
+class MarcController @Inject()(conf: play.api.Configuration) (system: ActorSystem) extends Controller {
 
   
   val supervisor = system.actorOf(Props[Supervisor], "Supervisor")
@@ -33,7 +33,7 @@ class MarcController @Inject() (system: ActorSystem) extends Controller {
     val status = Await.result(future, timeout.duration).asInstanceOf[Map[String, String]]
     val processing = status.filter(_._2 == "PROCESSING")
     val errors = status.filter(_._2 == "ERROR")
-    val files = new File("/opt/fs/marc/complete").listFiles
+    val files = new File(conf.underlying.getString("fs.complete")).listFiles
 
     Ok(views.html.marc(files, processing, errors))
   }
@@ -51,7 +51,7 @@ class MarcController @Inject() (system: ActorSystem) extends Controller {
 
   def download(id: String) = Action {
     Ok.sendFile(
-      content = new java.io.File(s"/opt/fs/marc/comlete/$id"),
+      content = new java.io.File(conf.underlying.getString("fs.complete") + id),
       fileName = _ => s"$id"
     )    
   }
