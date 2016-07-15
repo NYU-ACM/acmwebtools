@@ -7,5 +7,6 @@ object Protocol {
   case class AddRequest(id: String)
   case class RemoveRequest(id: String)
   case class ErrorRequest(id: String)
+  case class RequestSuccessful(id: String)
   case object GetProcessing
 }

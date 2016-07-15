@@ -21,7 +21,7 @@ class MarcController @Inject()(conf: play.api.Configuration) (system: ActorSyste
 
   
   val supervisor = system.actorOf(Props[Supervisor], "Supervisor")
-  val marcProps = Props(new MarcActor(supervisor))
+  val marcProps = Props(new MarcActor(conf, supervisor))
   val marc = system.actorOf(marcProps, "MARC")
 
   def index = Action { implicit request =>
@@ -31,11 +31,14 @@ class MarcController @Inject()(conf: play.api.Configuration) (system: ActorSyste
     
     val future = supervisor ? GetProcessing
     val status = Await.result(future, timeout.duration).asInstanceOf[Map[String, String]]
+    
     val processing = status.filter(_._2 == "PROCESSING")
     val errors = status.filter(_._2 == "ERROR")
+    val success = status.filter(_._2 == "SUCCESS")
+
     val files = new File(conf.underlying.getString("fs.complete")).listFiles
 
-    Ok(views.html.marc(files, processing, errors))
+    Ok(views.html.marc(files, processing, errors, success))
   }
 
   def  generate = Action(parse.multipartFormData) { implicit request =>

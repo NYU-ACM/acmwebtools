@@ -5,6 +5,7 @@ import play.api._
 import protocol.Protocol._
 import scala.sys.process._
 import java.io._
+import javax.inject._
 
 class Supervisor extends Actor {
   var requestStatus = Map[String,String]()
@@ -16,6 +17,8 @@ class Supervisor extends Actor {
 
     case e: ErrorRequest => { requestStatus = requestStatus + (e.id -> "ERROR") }
 
+    case s: RequestSuccessful => { requestStatus = requestStatus + (s.id -> "SUCCESS") }
+
     case GetProcessing => {
 
       sender ! requestStatus
@@ -25,7 +28,7 @@ class Supervisor extends Actor {
   }
 }
 
-class MarcActor(supervisor: ActorRef) extends Actor {
+class MarcActor (conf: play.api.Configuration, supervisor: ActorRef) extends Actor {
   def receive = {
   	case m: MarcRequest => {
   	  generateMarc(m)   
@@ -52,7 +55,7 @@ class MarcActor(supervisor: ActorRef) extends Actor {
       }
     )
 
-    Seq("ruby", Play.current.configuration.getString("marc.location").get, repo, resource) ! processLogger
+    Seq("ruby", conf.underlying.getString("marc.location"), repo, resource) ! processLogger
 
     errorWriter.close
 
@@ -61,7 +64,10 @@ class MarcActor(supervisor: ActorRef) extends Actor {
         supervisor ! RemoveRequest(rId)
         supervisor ! ErrorRequest(rId)
       }
-      case false =>
+      case false => {
+        supervisor ! RemoveRequest(rId)
+        supervisor ! RequestSuccessful(rId)
+      }
     }
     
 
