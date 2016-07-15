@@ -4,35 +4,66 @@ import akka.actor.{ Props, Actor, ActorRef }
 import play.api._
 import protocol.Protocol._
 import scala.sys.process._
+import java.io._
 
-object MarcActor {
-  def props = Props[MarcActor]
+class Supervisor extends Actor {
+  var requestStatus = Map[String,String]()
+  
+  def receive = {
+    case a: AddRequest => { requestStatus = requestStatus + (a.id -> "PROCESSING") }
+
+    case r: RemoveRequest => { requestStatus = requestStatus - r.id }
+
+    case e: ErrorRequest => { requestStatus = requestStatus + (e.id -> "ERROR") }
+
+    case GetProcessing => {
+
+      sender ! requestStatus
+    }
+
+    case _ =>
+  }
 }
 
-class MarcActor extends Actor {
+class MarcActor(supervisor: ActorRef) extends Actor {
   def receive = {
   	case m: MarcRequest => {
   	  generateMarc(m)   
   	}
-  	case _ => println("MARC-ACTOR")
+  	case _ => 
   }
 
   def generateMarc(mr: MarcRequest) {
-    try{
-      println("MARC_ACTOR-MARC_REQUEST " + mr)
-      
-      val processLogger = ProcessLogger(
-      	(o: String) => println(o),
-      	(e: String) => println(s"ERR: $e")
-      )
+    val repo = mr.repositoryId.toString 
+    val resource = mr.resourceId.toString
+    val rId = repo + "_" + resource
+    supervisor ! AddRequest(rId)
+    
+    val errorWriter = new FileWriter("/opt/aspace-marc-cli/error.log")
 
-      val repo = mr.repositoryId.toString	
-      val resource = mr.resourceId.toString
+    var error = false
 
-      Seq("ruby", Play.current.configuration.getString("marc.location").get, repo, resource) ! processLogger
+    val processLogger = ProcessLogger(
+    	(o: String) => {  },
+    	(e: String) => {  
+        error = true
+        errorWriter.append(e + "\n")
+        errorWriter.flush
+      }
+    )
 
-    } catch {
-      case e: Exception => println(e)
+    Seq("ruby", Play.current.configuration.getString("marc.location").get, repo, resource) ! processLogger
+
+    errorWriter.close
+
+    error match {
+      case true => { 
+        supervisor ! RemoveRequest(rId)
+        supervisor ! ErrorRequest(rId)
+      }
+      case false =>
     }
+    
+
   }
 }

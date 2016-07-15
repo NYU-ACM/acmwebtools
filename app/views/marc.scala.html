@@ -1,4 +1,4 @@
-@(files: Array[java.io.File])
+@(files: Array[java.io.File], processing: Map[String, String], errors: Map[String, String])
 
 @main("ACM web tools") {
 	<h2> Request MARC XML </h2>
@@ -20,10 +20,17 @@
 
 	}
 
-	<h2>Available Files</h2>
+	<h2>Completed Requests</h2>
 
 	@for(file <- files) { 
 	  <a href='@routes.MarcController.download(file.getName)'/>@file.getName</a><br>
     }
+
+    <h2>Requests Currently Processing</h2>
+    @for(i <- processing) { <strong>@i._1</strong></br> }
+
+    <h2>Failed Requests</h2>
+    @for(i <- errors) { <strong>@i._1</strong></br>  }
+    
 
 }

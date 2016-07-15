@@ -9,15 +9,33 @@ import play.api.mvc.Flash
 import protocol.Protocol._
 import actors._
 import akka.actor._
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent._
+
 
 @Singleton
 class MarcController @Inject() (system: ActorSystem) extends Controller {
 
-  val marc = system.actorOf(MarcActor.props, "Marc-Actor")
+  
+  val supervisor = system.actorOf(Props[Supervisor], "Supervisor")
+  val marcProps = Props(new MarcActor(supervisor))
+  val marc = system.actorOf(marcProps, "MARC")
 
   def index = Action { implicit request =>
-    val files = new File("/opt/fs/marc").listFiles
-    Ok(views.html.marc(files))
+
+    implicit val timeout = Timeout(5 seconds)
+    supervisor ! GetProcessing
+    
+    val future = supervisor ? GetProcessing
+    val status = Await.result(future, timeout.duration).asInstanceOf[Map[String, String]]
+    val processing = status.filter(_._2 == "PROCESSING")
+    val errors = status.filter(_._2 == "ERROR")
+    val files = new File("/opt/fs/marc/complete").listFiles
+
+    Ok(views.html.marc(files, processing, errors))
   }
 
   def  generate = Action(parse.multipartFormData) { implicit request =>
@@ -33,7 +51,7 @@ class MarcController @Inject() (system: ActorSystem) extends Controller {
 
   def download(id: String) = Action {
     Ok.sendFile(
-      content = new java.io.File(s"/opt/fs/marc/$id"),
+      content = new java.io.File(s"/opt/fs/marc/comlete/$id"),
       fileName = _ => s"$id"
     )    
   }
